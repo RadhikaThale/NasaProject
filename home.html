@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terra Tales: 25 Years of Deforestation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0e1a;
+            color: #fff;
+            overflow-x: hidden;
+        }
+         /* Navigation Bar */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(10, 14, 26, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 50px;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        nav .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            background: linear-gradient(to right, #4ade80, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 30px;
+        }
+
+        nav ul li a {
+            color: #cbd5e1;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: #4ade80;
+        }
+
+        /* HERO SECTION */
+    .hero {
+        position: relative;
+        height: 100vh;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        overflow: hidden;
+    }
+
+    /* Background Video */
+    .hero video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 0;
+        filter: brightness(0.4); /* makes text readable */
+    }
+
+    /* Overlay (adds slight dark gradient for readability) */
+    .hero::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.4);
+        z-index: 1;
+    }
+
+    /* Centered Text */
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        max-width: 800px;
+        padding: 20px;
+        color: #fff;
+        animation: fadeInUp 1.5s ease;
+    }
+
+    .hero-content h1 {
+        font-size: 3rem;
+        font-weight: 800;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .hero-content h1::before {
+        content: "🌳";
+        font-size: 2.8rem;
+    }
+
+    .hero-content .tagline {
+        font-size: 1.4rem;
+        color: #cbd5e1;
+        margin: 15px 0 25px;
+    }
+
+    .hero-content .intro-text {
+        font-size: 1.05rem;
+        line-height: 1.8;
+        color: #e2e8f0;
+    }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .hero-content h1 { font-size: 2rem; }
+        .hero-content .tagline { font-size: 1.1rem; }
+        .hero-content .intro-text { font-size: 0.95rem; }
+    }
+        .scroll-indicator {
+            position: absolute;
+            bottom: 30px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-20px); }
+            60% { transform: translateY(-10px); }
+        }
+
+        /* Section Styling */
+        section {
+            padding: 100px 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h2 {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            background: linear-gradient(to right, #4ade80, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Interactive Timeline */
+        .timeline-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .year-display {
+            font-size: 4rem;
+            text-align: center;
+            color: #4ade80;
+            margin-bottom: 2rem;
+            font-weight: bold;
+        }
+
+        .slider-container {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: linear-gradient(to right, #4ade80 0%, #ef4444 100%);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(74, 222, 128, 0.6);
+        }
+
+        #map {
+            height: 500px;
+            border-radius: 15px;
+            margin-top: 30px;
+            border: 2px solid rgba(74, 222, 128, 0.3);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(74, 222, 128, 0.1) 0%, rgba(34, 211, 238, 0.1) 100%);
+            padding: 30px;
+            border-radius: 15px;
+            border: 1px solid rgba(74, 222, 128, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(74, 222, 128, 0.2);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            color: #4ade80;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            color: #94a3b8;
+            margin-top: 10px;
+        }
+
+        /* Causes Grid */
+        .causes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .cause-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cause-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(74, 222, 128, 0.1) 0%, transparent 70%);
+            transition: transform 0.6s ease;
+            transform: scale(0);
+        }
+
+        .cause-card:hover::before {
+            transform: scale(1);
+        }
+
+        .cause-card:hover {
+            transform: scale(1.05);
+            border-color: rgba(74, 222, 128, 0.5);
+        }
+
+        .cause-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .cause-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #4ade80;
+        }
+
+        /* Impact Section */
+          /* Impact Section */
+        #impact {
+            background: linear-gradient(180deg, #1a1a2e 0%, #0f1419 100%);
+        }
+
+        .impact-visual {
+            max-width: 1000px;
+            margin: 3rem auto;
+            padding: 3rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 25px;
+            border: 1px solid rgba(255, 107, 53, 0.3);
+        }
+        .progress-bar {
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4a7c2c, #ff6b35);
+            border-radius: 20px;
+            transition: width 2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 1rem;
+            font-weight: bold;
+        }
+
+        /* Pledge Section */
+        .pledge-section {
+            background: linear-gradient(135deg, rgba(74, 222, 128, 0.2) 0%, rgba(34, 211, 238, 0.2) 100%);
+            border-radius: 20px;
+            padding: 60px;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .pledge-button {
+            background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+            color: #000;
+            border: none;
+            padding: 20px 50px;
+            font-size: 1.3rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin-top: 30px;
+        }
+
+        .pledge-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 10px 40px rgba(74, 222, 128, 0.4);
+        }
+
+        .pledge-count {
+            font-size: 2rem;
+            color: #4ade80;
+            margin-top: 20px;
+        }
+
+        /* Footer */
+        footer {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 50px 20px;
+            text-align: center;
+            margin-top: 100px;
+        }
+
+        .data-sources {
+            color: #94a3b8;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            h2 { font-size: 2rem; }
+            .tagline { font-size: 1.3rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav>
+        <div class="logo">🌳 Terra Tales</div>
+        <ul>
+            <li><a href="#timeline">Dashboard</a></li>
+            <li><a href="#causes">Podcast</a></li>
+            <li><a href="#impact">Kids Section</a></li>
+            <li><a href="#pledge">Sign in/ Log in</a></li>
+        </ul>
+    </nav>
+   <section class="hero">
+    <video autoplay muted loop playsinline>
+        <source src="C:\Users\Radhi\Downloads\bg.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <div class="hero-content">
+        <h1>Terra Tales</h1>
+        <p class="tagline">25 Years, 1 Planet, Countless Trees Lost 🌍</p>
+        <div class="intro-text">
+            For 25 years, NASA's Terra satellite has been watching our planet from space.
+            Using advanced instruments like MODIS, ASTER, and MISR, Terra has documented 
+            the dramatic transformation of Earth's forests. This is the story the data tells —
+            a story of loss, impact, and hope for restoration.
+        </div>
+    </div>
+</section>
+        <div class="scroll-indicator">
+            <svg width="30" height="50" viewBox="0 0 30 50" fill="none">
+                <rect x="1" y="1" width="28" height="48" rx="14" stroke="#4ade80" stroke-width="2"/>
+                <circle cx="15" cy="15" r="5" fill="#4ade80">
+                    <animate attributeName="cy" from="15" to="35" dur="1.5s" repeatCount="indefinite"/>
+                </circle>
+            </svg>
+        </div>
+    </div>
+
+
+    <!-- Interactive Timeline Section -->
+    <section id="timeline">
+        <h2>🗓 Journey Through Time</h2>
+        <div class="timeline-container">
+            <div class="year-display" id="yearDisplay">2000</div>
+            <div class="slider-container">
+                <input type="range" id="yearSlider" min="2000" max="2025" value="2000" step="1">
+            </div>
+            <div id="map"></div>
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-number" id="forestLoss">420M</div>
+                    <div class="stat-label">Hectares Lost Since 2000</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="co2Impact">165B</div>
+                    <div class="stat-label">Tons of CO₂ Released</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="speciesImpact">10,000+</div>
+                    <div class="stat-label">Species at Risk</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Causes Section -->
+    <section id="causes">
+        <h2>🔥 What's Driving Deforestation?</h2>
+        <div class="causes-grid">
+            <div class="cause-card">
+                <div class="cause-icon">🏙</div>
+                <div class="cause-title">Urbanization</div>
+                <p>Rapid city expansion captured by ASTER data shows concrete replacing canopy, with urban areas growing 300% in hotspot regions since 2000.</p>
+            </div>
+            <div class="cause-card">
+                <div class="cause-icon">🌾</div>
+                <div class="cause-title">Agriculture</div>
+                <p>Large-scale farming operations clear millions of hectares annually. MODIS data reveals cropland replacing forest at alarming rates across the Amazon and Southeast Asia.</p>
+            </div>
+            <div class="cause-card">
+                <div class="cause-icon">🔥</div>
+                <div class="cause-title">Wildfires</div>
+                <p>Terra's fire detection systems track devastating blazes. Climate change intensifies fire seasons, with record-breaking burns destroying ancient forests.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Impact Section -->
+   <!-- Impact Section -->
+    <section id="impact" class="section">
+        <h2>🌍 The Ripple Effect</h2>
+        <div class="impact-visual">
+            <h3 style="text-align: center; margin-bottom: 2rem;">Global Impact by the Numbers</h3>
+            
+            <div>
+                <p>🌡️ Global Temperature Rise</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="tempRise" style="width: 0%">+1.2°C</div>
+                </div>
+            </div>
+            
+            <div>
+                <p>💨 CO₂ Emissions from Deforestation</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="co2Emissions" style="width: 0%">5.2 Gt/year</div>
+                </div>
+            </div>
+            
+            <div>
+                <p>🦜 Species at Risk</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="speciesRisk" style="width: 0%">1 Million+</div>
+                </div>
+            </div>
+
+            <p style="margin-top: 2rem; text-align: center; font-size: 1.1rem;">
+                Every square kilometer of forest lost equals 200,000 tons of CO₂ released—
+                carbon that would have been nature's gift to fight climate change.
+            </p>
+        </div>
+    </section>
+
+    <!-- Solutions Section -->
+    <section id="solutions">
+        <h2>🌱 Solutions & Hope</h2>
+        <div class="causes-grid">
+            <div class="cause-card">
+                <div class="cause-icon">🌳</div>
+                <div class="cause-title">Reforestation</div>
+                <p>Global initiatives have planted over 13 billion trees. India's target: 95 million hectares under forest cover by 2030.</p>
+            </div>
+            <div class="cause-card">
+                <div class="cause-icon">🚜</div>
+                <div class="cause-title">Sustainable Farming</div>
+                <p>Agroforestry and precision agriculture reduce deforestation while maintaining food security.</p>
+            </div>
+            <div class="cause-card">
+                <div class="cause-icon">📜</div>
+                <div class="cause-title">Policy & Protection</div>
+                <p>Strengthened forest laws and satellite monitoring help protect critical ecosystems.</p>
+            </div>
+        </div>
+
+        <div class="pledge-section">
+            <h2 style="color: #fff;">Take the Pledge 🌿</h2>
+            <p style="font-size: 1.3rem; color: #cbd5e1; margin-top: 20px;">
+                Join thousands in committing to plant trees, reduce consumption, and advocate for forest protection.
+            </p>
+            <button class="pledge-button" onclick="takePledge()">I Pledge to Save Our Forests</button>
+            <div class="pledge-count" id="pledgeCount">12,847 pledges taken</div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <h3 style="color: #4ade80; margin-bottom: 20px;">Data Sources & Credits</h3>
+        <div class="data-sources">
+            <p><strong>NASA Terra Mission</strong></p>
+            <p>MODIS (Moderate Resolution Imaging Spectroradiometer)</p>
+            <p>ASTER (Advanced Spaceborne Thermal Emission and Reflection Radiometer)</p>
+            <p>MISR (Multi-angle Imaging SpectroRadiometer)</p>
+            <p style="margin-top: 20px;">Additional data from Global Forest Watch, ESA, and ISRO</p>
+            <p style="margin-top: 30px; color: #64748b;">Created for NASA Space Apps Challenge 2025</p>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+    let pledgeCount = 12847;
+    let map;
+    let hotspotCircles = [];
+
+    // Sample deforestation data by year
+    const deforestationData = {
+        2000: { forestLoss: 0, co2: 0, species: 10000, radius: 200000 },
+        2005: { forestLoss: 84, co2: 33, species: 12000, radius: 300000 },
+        2010: { forestLoss: 168, co2: 66, species: 15000, radius: 400000 },
+        2015: { forestLoss: 252, co2: 99, species: 17000, radius: 500000 },
+        2020: { forestLoss: 336, co2: 132, species: 20000, radius: 600000 },
+        2025: { forestLoss: 420, co2: 165, species: 23000, radius: 700000 },
+    };
+
+    // Hotspots base data
+    const baseHotspots = [
+        { coords: [-3.4653, -62.2159], name: 'Amazon Rainforest' },
+        { coords: [15.8700, 74.5000], name: 'Western Ghats, India' },
+        { coords: [-1.5, 117.0], name: 'Borneo, Indonesia' },
+        { coords: [-19.0, 47.0], name: 'Madagascar' },
+        { coords: [9.0, -80.0], name: 'Central America' }
+    ];
+
+    // Initialize map
+    function initMap() {
+        map = L.map('map').setView([0, 0], 2);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        updateMap(2000);
+    }
+
+    // Update hotspots and stats for a given year
+    function updateMap(year) {
+        // Remove old circles
+        hotspotCircles.forEach(c => map.removeLayer(c));
+        hotspotCircles = [];
+
+        const data = deforestationData[year] || deforestationData[2025];
+        baseHotspots.forEach(spot => {
+            const circle = L.circle(spot.coords, {
+                color: '#ef4444',
+                fillColor: '#ef4444',
+                fillOpacity: 0.4,
+                radius: data.radius
+            }).addTo(map);
+            circle.bindPopup(`<b>${spot.name}</b><br>Forest Loss: ${data.forestLoss}M ha`);
+            hotspotCircles.push(circle);
+        });
+
+        // Update stats
+        document.getElementById('forestLoss').textContent = data.forestLoss + 'M';
+        document.getElementById('co2Impact').textContent = data.co2 + 'B';
+        document.getElementById('speciesImpact').textContent = data.species + '+';
+    }
+
+    // Slider functionality
+    const yearSlider = document.getElementById('yearSlider');
+    const yearDisplay = document.getElementById('yearDisplay');
+
+    yearSlider.addEventListener('input', (e) => {
+        const year = e.target.value;
+        yearDisplay.textContent = year;
+        updateMap(year);
+    });
+    // Animate progress bars on scroll 
+    const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { document.getElementById('tempRise').style.width = '60%'; document.getElementById('co2Emissions').style.width = '75%'; document.getElementById('speciesRisk').style.width = '85%'; } }); }); observer.observe(document.querySelector('.impact-visual'));
+    // Pledge function
+    function takePledge() {
+        pledgeCount++;
+        document.getElementById('pledgeCount').textContent = pledgeCount.toLocaleString() + ' pledges taken';
+        
+        const button = document.querySelector('.pledge-button');
+        button.textContent = '✓ Thank You for Your Pledge!';
+        button.style.background = 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)';
+        
+        setTimeout(() => {
+            button.textContent = 'I Pledge to Save Our Forests';
+            button.style.background = 'linear-gradient(135deg, #4ade80 0%, #22d3ee 100%)';
+        }, 3000);
+    }
+
+    window.addEventListener('load', initMap);
+</script>
+
+</body>
+</html>
